@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Assistant</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; background-color: #f4f4f9; }
+        #chat-container { border: 1px solid #ccc; background-color: white; padding: 20px; border-radius: 8px; }
+        #chat-box { height: 400px; overflow-y: auto; border-bottom: 1px solid #ccc; margin-bottom: 15px; }
+        #user-input { display: flex; }
+        #query-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        #send-button { padding: 10px 20px; border: none; background-color: #007bff; color: white; cursor: pointer; }
+        .message { margin-bottom: 15px; }
+        .user-msg { text-align: right; color: #0056b3; }
+        .bot-msg { background-color: #e9ecef; padding: 10px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Research Assistant Chatbot 🤖</h1>
+    <div id="chat-container">
+        <div id="chat-box"></div>
+        <div id="user-input">
+            <input type="text" id="query-input" placeholder="Ask me anything...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const queryInput = document.getElementById('query-input');
+        const sendButton = document.getElementById('send-button');
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        async function sendMessage() {
+            const query = queryInput.value.trim();
+            if (!query) return;
+
+            chatBox.innerHTML += `<div class="message user-msg"><b>You:</b> ${query}</div>`;
+            queryInput.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const response = await fetch('/ask/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrftoken},
+                body: JSON.stringify({ query: query })
+            });
+            const data = await response.json();
+            chatBox.innerHTML += `<div class="message bot-msg"><b>Bot:</b> ${data.response}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        queryInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+    </script>
+</body>
+</html>
